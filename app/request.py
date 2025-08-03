@@ -1,3 +1,4 @@
+import json
 from urllib.parse import urlparse, parse_qs
 
 class Request:
@@ -5,6 +6,7 @@ class Request:
         self.raw = raw_data
         self.headers = {}
         self.body = b""
+        self.path_params = {}
 
         head, _, body = raw_data.partition(b"\r\n\r\n")
         self.body = body
@@ -25,3 +27,18 @@ class Request:
             if b":" in line:
                 k, v = line.decode().split(":", 1)
                 self.headers[k.strip().lower()] = v.strip()
+
+    def json(self):
+        try:
+            return json.loads(self.body.decode())
+        except:
+            return {}
+
+    def form(self):
+        try:
+            return {k: v[0] for k, v in parse_qs(self.body.decode()).items()}
+        except:
+            return {}
+
+    def header(self, key: str) -> str:
+        return self.headers.get(key.lower(), "")

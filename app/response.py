@@ -1,3 +1,5 @@
+import json
+
 class Response:
     def __init__(self, body: bytes, status: str = "200 OK", headers=None):
         self.body = body
@@ -7,9 +9,20 @@ class Response:
     def to_bytes(self) -> bytes:
         headers = {
             "Content-Length": str(len(self.body)),
-            "Content-Type": "text/plain",
             "Connection": "close",
+            "Content-Type": self.headers.get("Content-Type", "text/plain"),
             **self.headers,
         }
-        lines = [f"HTTP/1.1 {self.status}"] + [f"{k}: {v}" for k, v in headers.items()]
-        return ("\r\n".join(lines) + "\r\n\r\n").encode() + self.body
+        head = "\r\n".join([f"HTTP/1.1 {self.status}"] + [f"{k}: {v}" for k, v in headers.items()])
+        return head.encode() + b"\r\n\r\n" + self.body
+
+    @classmethod
+    def json(cls, obj: dict, status: str = "200 OK", headers=None):
+        headers = headers or {}
+        headers["Content-Type"] = "application/json"
+        body = json.dumps(obj).encode()
+        return cls(body, status, headers)
+
+    @classmethod
+    def text(cls, text: str, status: str = "200 OK", headers=None):
+        return cls(text.encode(), status, headers)

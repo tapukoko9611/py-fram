@@ -18,6 +18,8 @@ router = Router()
 router.get("/")(main.index_handler)
 router.get("/hello")(main.hello_handler)
 router.get("/user/{id}")(main.user_handler)
+router.post("/echo")(main.echo_json)
+
 
 middleware = MiddlewareStack()
 middleware.use(logging_middleware)
