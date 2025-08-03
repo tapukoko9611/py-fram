@@ -1,4 +1,5 @@
 import socket
+from app.router import Router
 from app.request import Request
 from app.response import Response
 from app.handlers import main
@@ -11,8 +12,12 @@ ROUTES = {
     "/": main.index_handler,
     "/hello": main.hello_handler,
 }
+router = Router()
+router.get("/")(main.index_handler)
+router.get("/hello")(main.hello_handler)
+router.get("/user/{id}")(main.user_handler)
 
-def handle_client(conn, addr):
+def handle_client1(conn, addr):
     raw = conn.recv(BUFF_SIZE)
     if not raw:
         conn.close()
@@ -29,6 +34,28 @@ def handle_client(conn, addr):
 
     except Exception as e:
         res = Response(f"500 Internal Server Error\n{str(e)}\n".encode(), status="500 Internal Server Error")
+
+    conn.sendall(res.to_bytes())
+    conn.close()
+
+def handle_client(conn, addr):
+    raw = conn.recv(16_384)
+    if not raw:
+        conn.close()
+        return
+
+    try:
+        req = Request(raw)
+        match = router.resolve(req.method, req.path)
+
+        if match:
+            handler, path_params = match
+            req.path_params = path_params
+            res = handler(req)
+        else:
+            res = Response(b"404 Not Found\n", "404 Not Found")
+    except Exception as e:
+        res = Response(f"500 Server Error\n{str(e)}".encode(), "500 Internal Server Error")
 
     conn.sendall(res.to_bytes())
     conn.close()
