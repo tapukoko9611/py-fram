@@ -3,6 +3,8 @@ from app.router import Router
 from app.request import Request
 from app.response import Response
 from app.handlers import main
+from app.middleware import MiddlewareStack
+from app.middleware_builtins import logging_middleware, cors_middleware
 
 HOST = "0.0.0.0"
 PORT = 8000
@@ -16,6 +18,10 @@ router = Router()
 router.get("/")(main.index_handler)
 router.get("/hello")(main.hello_handler)
 router.get("/user/{id}")(main.user_handler)
+
+middleware = MiddlewareStack()
+middleware.use(logging_middleware)
+middleware.use(cors_middleware)
 
 def handle_client1(conn, addr):
     raw = conn.recv(BUFF_SIZE)
@@ -51,7 +57,8 @@ def handle_client(conn, addr):
         if match:
             handler, path_params = match
             req.path_params = path_params
-            res = handler(req)
+            final_handler = middleware.wrap(handler)
+            res = final_handler(req)
         else:
             res = Response(b"404 Not Found\n", "404 Not Found")
     except Exception as e:
