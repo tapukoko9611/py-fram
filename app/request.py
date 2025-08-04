@@ -1,4 +1,5 @@
 import json
+from http.cookies import SimpleCookie
 from urllib.parse import urlparse, parse_qs
 
 class Request:
@@ -27,6 +28,14 @@ class Request:
             if b":" in line:
                 k, v = line.decode().split(":", 1)
                 self.headers[k.strip().lower()] = v.strip()
+
+        # Parse cookies
+        cookie_header = self.headers.get("cookie", "")
+        self.cookies = {}
+        if cookie_header:
+            cookie = SimpleCookie()
+            cookie.load(cookie_header)
+            self.cookies = {k: v.value for k, v in cookie.items()}
 
     def json(self):
         try:

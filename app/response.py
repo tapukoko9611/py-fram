@@ -26,3 +26,9 @@ class Response:
     @classmethod
     def text(cls, text: str, status: str = "200 OK", headers=None):
         return cls(text.encode(), status, headers)
+
+    def set_cookie(self, key, value, path="/", http_only=True):
+        cookie = f"{key}={value}; Path={path}"
+        if http_only:
+            cookie += "; HttpOnly"
+        self.headers["Set-Cookie"] = cookie

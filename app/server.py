@@ -4,7 +4,8 @@ from app.request import Request
 from app.response import Response
 from app.handlers import main
 from app.middleware import MiddlewareStack
-from app.middleware_builtins import logging_middleware, cors_middleware
+from app.middleware_builtins import logging_middleware, cors_middleware, session_middleware
+from app.handlers import auth
 
 HOST = "0.0.0.0"
 PORT = 8000
@@ -19,11 +20,13 @@ router.get("/")(main.index_handler)
 router.get("/hello")(main.hello_handler)
 router.get("/user/{id}")(main.user_handler)
 router.post("/echo")(main.echo_json)
-
+router.post("/login")(auth.login)
+router.get("/profile")(auth.profile)
 
 middleware = MiddlewareStack()
 middleware.use(logging_middleware)
 middleware.use(cors_middleware)
+middleware.use(session_middleware)
 
 def handle_client1(conn, addr):
     raw = conn.recv(BUFF_SIZE)
